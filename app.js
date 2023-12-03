@@ -1,6 +1,8 @@
 require('dotenv').config();
 require('express-async-errors');
 
+
+const bcrypt = require('bcryptjs');
 const notFoundMiddleware = require('./middleware/not-found');
 const errorHandlerMiddleware = require('./middleware/error-handler');
 
@@ -18,6 +20,7 @@ const cookieParser = require('cookie-parser');
 const connectDB = require('./db/connect');
 //routes
 const authRouter = require('./routes/authRoute');
+const userRouter = require('./routes/userRoute');
 
 app.use(morgan('tiny'));
 app.use(express.json());
@@ -26,6 +29,7 @@ app.use(cookieParser(process.env.JWT_SECRET));
 app.get('/', (req, res) => {
   // throw new Error('raghav khandelwal');
   // throw Error('raghav khandelwal');
+
   res.send(`ecommerce api`);
 });
 
@@ -40,9 +44,11 @@ app.get('/api/v1', (req, res) => {
 });
 
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/users', userRouter);
 
 app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);
+
 
 const port = process.env.PORT || 3000;
 const start = async () => {
