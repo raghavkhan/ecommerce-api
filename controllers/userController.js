@@ -1,27 +1,38 @@
 const CustomError = require('../errors');
 const User = require('../models/User');
 const { StatusCodes } = require('http-status-codes');
+const { attachCookiesToResponse,createTokenUser,checkPermissions } = require('../utils');
 
 const getAllUsers = async (req, res) => {
-  const users = await User.find({ role: 'user' });
-  // .select('-password');
+  const users = await User.find({ role: 'user' }).select('-password');
   // const users = await User.find({ role: 'user' }, { password: 0 }); //another way
   res.status(StatusCodes.OK).json({ count: users.length, users });
 };
-const getSingleUser = async (req, res) => {
-  console.log(req.user);
 
-  // req.params.id = req.user.userId;
-  // const users = await User.findOne({ _id: id }).select('-password');
-  // const { id: userId } = req.params;
-  const users = await User.findOne({ _id: req.user.userId }).select(
-    '-password'
-  );
-  if (!users) {
-    throw new CustomError.NotFoundError(`No user with this id : ${userId}`);
+// const getSingleUser = async (req, res) => {
+//   console.log(req.user);
+//   // req.params.id = req.user.userId;
+//   const users = await User.findOne({ _id: req.params.id }).select('-password');
+//   // const { id: userId } = req.params;
+//   // const users = await User.findOne({ _id: req.user.userId }).select(
+//   //   '-password'
+//   // );
+//   if (!users) {
+//     throw new CustomError.NotFoundError(`No user with this id : ${userId}`);
+//   }
+//   res.status(StatusCodes.OK).json({ users });
+// };
+
+
+const getSingleUser = async (req,res) => {
+ const users = await User.findOne({_id:req.params.id}).select('-password');
+ 
+ if(!users){
+  throw new CustomError.NotFoundError(`No user with this id :${req.params.id}`)
   }
-  res.status(StatusCodes.OK).json({ users });
-};
+  checkPermissions(req.user, users._id);
+  res.status(StatusCodes.OK).json({users});
+}
 const showCurrentUser = async (req, res) => {
   // It can also be done like this-
   // const users = await User.findOne({ _id: req.user.userId }).select(
@@ -36,7 +47,26 @@ const showCurrentUser = async (req, res) => {
   res.status(StatusCodes.OK).json({ users: req.user });
 };
 const updateUser = async (req, res) => {
-  res.send(`updateUser`);
+  const { name: userName, userId, role } = req.user;
+  const { name, email } = req.body;
+  if (!name || !email) {
+    throw new CustomError.BadRequestError(
+      `please provide name and email for updation`
+    );
+  }
+  // const users = await User.findOneAndUpdate(
+  //   { _id: userId },
+  //   { email, name },
+  //   { new: true, runValidators: true }
+  // );
+  const users = await User.findOne({_id: userId});
+  users.email = email;
+  users.name = name;
+  await users.save();
+  
+  const tokenUser = createTokenUser({ users });
+  attachCookiesToResponse({ res, user: tokenUser });
+  res.status(StatusCodes.OK).json({ users: tokenUser });
 };
 const updateUserPassword = async (req, res) => {
   const { oldPassword, newPassword } = req.body;
@@ -52,7 +82,7 @@ const updateUserPassword = async (req, res) => {
   users.password = newPassword;
   await users.save();
   // res.status(StatusCodes.OK).json({ msg: 'Success! Password updated.' });
-  res.json({ users });
+  res.status(StatusCodes.OK).json({ users });
   // res.send(`updateUserPassword`);
   // $2a$10$URoAZw9ELIjxEHCepdP4yOVeeRZVJ0RWHeqgHI/bXGFBt0Hr/148i
 };
@@ -64,3 +94,25 @@ module.exports = {
   updateUser,
   updateUserPassword,
 };
+
+// const updateUser = async (req, res) => {
+//   console.log(req.user);
+//   const { name: userName, userId, role } = req.user;
+//   const { name, email } = req.body;
+//   if (!name || !email) {
+//     throw new CustomError.BadRequestError(
+//       `please provide name and email for updation`
+//     );
+//   }
+//   const users = await User.findOneAndUpdate(
+//     { _id: userId },
+//     { email, name },
+//     { new: true, runValidators: true }
+//   );
+//   if (!users) {
+//     throw new CustomError.NotFoundError('no such user');
+//   }
+//   const tokenUser = createTokenUser({ users });
+//   attachCookiesToResponse({ res, user: tokenUser });
+//   res.status(StatusCodes.OK).json({ users: tokenUser });
+// };

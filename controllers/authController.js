@@ -1,11 +1,13 @@
 const User = require('../models/User');
 const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
+
 // const { BadRequestError, UnauthenticatedError } = CustomError;
 const {
   createJWT,
   isTokenValid,
   attachCookiesToResponse,
+  createTokenUser,
 } = require('../utils');
 
 const register = async (req, res) => {
@@ -21,7 +23,9 @@ const register = async (req, res) => {
   const role = isFirstAccount ? 'admin' : 'user';
 
   const users = await User.create({ name, email, password, role });
-  const tokenUser = { name: users.name, userId: users._id, role: users.role };
+  const tokenUser = createTokenUser({ users });
+  // const tokenUser = { name: users.name, userId: users._id, role: users.role };
+
   attachCookiesToResponse({ res, user: tokenUser });
   res.status(StatusCodes.CREATED).json({ users: tokenUser });
 };
@@ -41,9 +45,10 @@ const login = async (req, res) => {
   if (!isPasswordCorrect) {
     throw new CustomError.UnauthenticatedError('Incorrect password');
   }
-  const tokenUser = { name: users.name, userId: users._id, role: users.role };
+  // const tokenUser = { name: users.name, userId: users._id, role: users.role };
+  const tokenUser = createTokenUser({ users });
   attachCookiesToResponse({ res, user: tokenUser });
-  res.status(StatusCodes.CREATED).json({ users: tokenUser });
+  res.status(StatusCodes.OK).json({ users: tokenUser });
 };
 const logout = async (req, res) => {
   console.log(req.signedCookies.token);

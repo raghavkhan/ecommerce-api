@@ -12,10 +12,15 @@ const {
 } = require('../controllers/userController');
 const router = express.Router();
 
-router.get('/', authenticateUser, authorizePermissions('admin'), getAllUsers);
+router.get('/', authorizePermissions('admin'), authenticateUser, getAllUsers);
 router.get('/showMe', authenticateUser, showCurrentUser);
-router.post('/updateUser', updateUser);
-router.post('/updateUserPassword', authenticateUser, updateUserPassword);
-router.get('/:id', authenticateUser, authorizePermissions(), getSingleUser);
+router.patch('/updateUser', authenticateUser, updateUser);
+router.patch('/updateUserPassword', authenticateUser, updateUserPassword);
+router.get(
+  '/:id',
+  authenticateUser,
+  authorizePermissions('user', 'admin'),
+  getSingleUser
+);
 
 module.exports = router;
