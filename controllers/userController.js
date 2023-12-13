@@ -1,7 +1,11 @@
-const CustomError = require('../errors');
 const User = require('../models/User');
+const CustomError = require('../errors');
 const { StatusCodes } = require('http-status-codes');
-const { attachCookiesToResponse,createTokenUser,checkPermissions } = require('../utils');
+const {
+  attachCookiesToResponse,
+  createTokenUser,
+  checkPermissions,
+} = require('../utils');
 
 const getAllUsers = async (req, res) => {
   const users = await User.find({ role: 'user' }).select('-password');
@@ -23,16 +27,17 @@ const getAllUsers = async (req, res) => {
 //   res.status(StatusCodes.OK).json({ users });
 // };
 
+const getSingleUser = async (req, res) => {
+  const users = await User.findOne({ _id: req.params.id }).select('-password');
 
-const getSingleUser = async (req,res) => {
- const users = await User.findOne({_id:req.params.id}).select('-password');
- 
- if(!users){
-  throw new CustomError.NotFoundError(`No user with this id :${req.params.id}`)
+  if (!users) {
+    throw new CustomError.NotFoundError(
+      `No user with this id :${req.params.id}`
+    );
   }
   checkPermissions(req.user, users._id);
-  res.status(StatusCodes.OK).json({users});
-}
+  res.status(StatusCodes.OK).json({ users });
+};
 const showCurrentUser = async (req, res) => {
   // It can also be done like this-
   // const users = await User.findOne({ _id: req.user.userId }).select(
@@ -59,11 +64,11 @@ const updateUser = async (req, res) => {
   //   { email, name },
   //   { new: true, runValidators: true }
   // );
-  const users = await User.findOne({_id: userId});
+  const users = await User.findOne({ _id: userId });
   users.email = email;
   users.name = name;
   await users.save();
-  
+
   const tokenUser = createTokenUser({ users });
   attachCookiesToResponse({ res, user: tokenUser });
   res.status(StatusCodes.OK).json({ users: tokenUser });
