@@ -11,6 +11,8 @@ const {
   uploadImage,
   getAllProducts,
 } = require('../controllers/productController');
+
+const { getSingleProductReviews } = require('../controllers/reviewController');
 const router = express.Router();
 
 router
@@ -25,7 +27,7 @@ router
 router
   .route('/uploadImage')
   .post([authenticateUser, authorizePermissions('admin')], uploadImage);
-
+router.route('/:id/reviews').get(getSingleProductReviews);
 // router.post('/', createProduct);
 // router.get('/', getAllProducts);
 // router.get('/:id', getSingleProduct);

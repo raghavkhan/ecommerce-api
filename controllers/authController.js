@@ -41,7 +41,7 @@ const login = async (req, res) => {
     throw new CustomError.UnauthenticatedError('Invalid Credentials');
   }
   const isPasswordCorrect = await users.comparePassword(password);
-  console.log(isPasswordCorrect);
+  // console.log(isPasswordCorrect);
   if (!isPasswordCorrect) {
     throw new CustomError.UnauthenticatedError('Incorrect password');
   }
@@ -51,7 +51,7 @@ const login = async (req, res) => {
   res.status(StatusCodes.OK).json({ users: tokenUser });
 };
 const logout = async (req, res) => {
-  console.log(req.signedCookies.token);
+  // console.log(req.signedCookies.token);
   res.cookie('token', 'logout', {
     httpOnly: true,
     expires: new Date(Date.now()),
